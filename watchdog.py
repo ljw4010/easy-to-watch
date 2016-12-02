@@ -5,7 +5,7 @@
 @version: 1.1
 @history: 2016/10/25 10:39
 @history: 2016/12/01 15:51
-@author: li_jinwei@dahuatech.com
+@author: ljw4010@sina.cn
 """
 
 import os,sys,time,getpass,logging,copy
