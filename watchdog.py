@@ -83,7 +83,7 @@ class WatchDog():
                 real_task = task[0] + ' ' + task[1] + ' ' + task[2] + ' ' + task[3] + ' ' + task[4]  
             return real_task
         task = check_task(self.task)
-        self.CRON_CMD = task + " cd " + self.file_path + '; /usr/bin/env python ' + sys.argv[0] + ' ' + ' '.join(sys.argv[1:]) + ' 2>&1'
+        self.CRON_CMD = task + " cd " + self.file_path + '; /usr/bin/env python ' + sys.argv[0] + ' ' + ' '.join(sys.argv[1:]) + ' > /dev/null 2>&1'
 
     def _is_port_exist(self):
         '''端口检测'''
@@ -153,7 +153,6 @@ class WatchDog():
         if cmd == 'remove':
             job._remove()
         if cmd == 'add':
-            job._remove()
             job._add()
         if cmd == 'disenable':
             job._disenable()
@@ -184,7 +183,7 @@ class WatchDog():
         '''启动程序'''
 
         if self.app_name in ['front', 'back']:
-            if self._is_scripts_exist(self.tomcat_scrip):
+            if self._is_scripts_exist(self.tomcat_script):
                 os.chdir(self.catalina_dir)
                 os.system(self.SHELL + ' ' + self.tomcat_script + ' > /dev/null 2>&1')
                 self._crontab('add')
@@ -256,8 +255,6 @@ class WatchDog():
                     pid = get_pid(real_dir)
                     break
         return real_path,pid
-    
-
 
     #状态判断
     #No.1 支持pid文件方式 
@@ -361,7 +358,7 @@ class WatchDog():
 class CronTab(object):
     def __init__(self,job,proc):
         self.CRONCMD = "/usr/bin/crontab "
-        self.tmp_file = "tmp_cron"
+        self.tmp_file = ".tmp_cron"
         self.job = job
         self.app_name = proc
         self.lines = []
@@ -399,23 +396,27 @@ class CronTab(object):
         return False
 
     def _add(self):
-        self._read()
+        if self._exist():
+            self.__remove()
         self.lines.append(' '.join(self.job.split()))
         self._write()
 
     def _remove(self):
         if self._exist():
-            tmp_lines = copy.deepcopy(self.lines)
-            for job in self.lines:
-                job_list = job.split()
-                if job_list.count("-m") == 1 and job_list[job_list.index("-m")+1] == self.app_name:
-                    tmp_lines.remove(job)
-                else:
-                    for item in job_list:
-                        if item.startswith("-m") and item.split('-m')[1]==self.app_name:
-                            tmp_lines.remove(job)
-            self.lines = copy.deepcopy(tmp_lines)
+            self.__remove()
             self._write()
+
+    def __remove(self):
+        tmp_lines = copy.deepcopy(self.lines)
+        for job in self.lines:
+            job_list = job.split()
+            if job_list.count("-m") == 1 and job_list[job_list.index("-m")+1] == self.app_name:
+                tmp_lines.remove(job)
+            else:
+                for item in job_list:
+                    if item.startswith("-m") and item.split('-m')[1]==self.app_name:
+                        tmp_lines.remove(job)
+        self.lines = copy.deepcopy(tmp_lines)
 
     def _disenable(self):
         if self._exist():
