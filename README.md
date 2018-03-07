@@ -1,5 +1,5 @@
 # easy-to-watch
-for watch process
+for watching process
 
 Usage: 
 watchdog [options] 
